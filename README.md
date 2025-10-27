@@ -1,120 +1,105 @@
-# Phonk Edit Desktop# PhonkEdit Desktop
+phonkedit-desktop
+=================
 
-# yes i did use ai for a read me!
+What this is
+-------------
+phonkedit-desktop is a small Python desktop utility that captures your screen(s), applies a stylized "phonk" filter, optionally overlays skull art, and plays a random phonk audio track. It is designed to run locally and save capture outputs to the `output/` directory.
 
-Windows desktop click-triggered phonk edit: on any mouse click, it grabs all monitors, applies a moody grayscale, pops an on-screen overlay per monitor, and plays a random phonk track. The overlay stays up until the track finishes.A tiny Windows tool that listens for global mouse clicks and, on each click or right-click, takes a screenshot of every monitor and applies the Phonk Edit grayscale + skull overlay while playing a random phonk track.
+Quick summary (one-liner)
+-------------------------
+Run with Python; it will create `config.json` with sensible defaults on first run and use the folders under `assets/` for images and audio.
 
+Prerequisites
+-------------
+- Python 3.8 or newer (3.10+ recommended)
+- Git (optional, for cloning)
+- The Python packages listed in `requirements.txt` (Pillow, mss, pygame). Tkinter is required for overlays — it is included with standard Python installs on most platforms.
 
+Bundled dependency versions (as provided in this repo)
+---------------------------------------------------
+- pillow==10.4.0
+- mss==9.0.1
+- pygame==2.6.1
 
-## Features## What it does
+Files and important paths
+-------------------------
+- `main.py` — main program entrypoint. Run with `python main.py`.
+- `config.json` — created on first run when missing. Edit to change timing, skull sizing, triggers, etc.
+- `assets/` — put your files here:
+	- `assets/phonk/` — OGG audio tracks (the app will pick a random .ogg to play)
+	- `assets/skulls/` — PNG skull images used for overlays
+- `output/` — per-run session folders and images are saved here.
 
-- Global left/right click trigger (polling; no drivers required)- Adds a system tray icon using a skull
+Running (macOS / Linux)
+-----------------------
+1. Create and activate a virtual environment and install dependencies:
 
-- Multi-monitor screenshots with grayscale/contrast/brightness mix- Left-click the tray icon or choose "Phonk Now" in the menu
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
 
-- On-screen overlay windows per monitor (always-on-top)- Captures all monitors, applies grayscale + skulls, saves to `output/`
+2. Run the app:
 
-- Separate layers: background screenshot and skull (skull is its own overlay layer)- Plays a random built-in phonk track (`.ogg`)
+```bash
+python main.py
+```
 
-- Phonk audio playback, overlay lifetime tied to audio
-
-- Configurable timing and skull size/placement via `config.json`## One-time setup (Windows PowerShell)
+Running (Windows — PowerShell)
+-----------------------------
+1. Create and activate a virtual environment and install dependencies:
 
 ```powershell
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
 
-## Setuppython -m venv .venv
+If PowerShell prevents activation because of execution policy, run (as user):
 
-1. Install Python 3.11+ (tested on 3.13 on Windows).. .venv\Scripts\Activate.ps1
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
 
-2. Install dependencies:pip install -r requirements.txt
+2. Run the app:
 
-   - `pip install -r requirements.txt````
+```powershell
+python main.py
+```
 
-3. Optional: set `PHONKEDIT_ASSETS_ROOT` to point to your mod assets root (auto-copies skulls and phonk audio on first run). If not set, put your assets here:
+Running (Windows — CMD)
+-----------------------
+```cmd
+python -m venv venv
+venv\Scripts\activate.bat
+pip install -r requirements.txt
+python main.py
+```
 
-   - `assets/skulls/` — PNG files named like `skull*.png`## Run
+How it behaves
+--------------
+- On startup it ensures `assets/` subfolders exist and writes `config.json` if missing.
+- When triggered (mouse click or occasional typing event), it captures all monitors, applies the filter, saves images to `output/session_<timestamp>_<pid>/` and briefly shows overlays.
+- To stop the app while running, use the global hotkey Ctrl+Shift+P (the app listens for that combo).
 
-   - `assets/phonk/` — OGG files named like `phonk*.ogg````powershell
+Configuration
+-------------
+- Edit `config.json` to adjust timings, skull size/position, typing trigger chance, and other parameters. Reasonable defaults are created automatically.
+- If you want to supply mod assets from an external path, you may set the environment variable `PHONKEDIT_ASSETS_ROOT` to point to that root; the app will use it when present.
 
-. .venv\Scripts\Activate.ps1
+Troubleshooting
+---------------
+- Missing/old Python: ensure `python --version` is 3.8+ and that the `python`/`python3` command used to create the venv matches the one used to run the app.
+- No audio: ensure you have at least one `.ogg` file in `assets/phonk/` and your OS audio is working.
+- No overlays on Windows: Tkinter is required; on some distributions you may need to install OS-level packages (macOS and Linux generally ship Tk; for many Linux distros install `python3-tk`).
+- PowerShell activation blocked: see the `Set-ExecutionPolicy` line above.
 
-## Runpython .\main.py
+If anything else fails, check the console output for errors; saved images include printed paths like `Saved output/...` when captures succeed.
 
-- `python main.py````
+License / Contact
+-----------------
+See the project repository for license and author contact information.
 
-- Click anywhere (left or right) to trigger.
+That's it — keep `assets/` populated and run `python main.py` to start capturing.
 
-- The overlay closes when the music ends.- Leave the window running; every mouse click triggers the effect
-
-- Processed images are saved under `output\` with timestamps
-
-## Configuration (`config.json`)- Press Ctrl+C in the terminal to exit
-
-A `config.json` is created on first run with defaults. You can tweak these values:
-
-## Assets
-
-- `click_delay_ms` (default 300)If `assets/skulls` and `assets/phonk` are empty, the app tries to auto-copy from the mod resources when available.
-
-  Wait after the click before capturing, in milliseconds. Useful so the screenshot reflects the click action.
-
-Set this environment variable to point directly at the mod assets root (folder containing `textures` and `sounds`):
-
-- `min_cooldown_ms` (default 200)
-
-  Minimum gap between triggers, in milliseconds.```powershell
-
-$env:PHONKEDIT_ASSETS_ROOT = "G:\phonkedit\src\main\resources\assets\phonkedit"
-
-- `skull_size_ratio` (default 0.18)```
-
-  Skull width as a fraction of the monitor width. Height scales to preserve aspect ratio.
-
-It will look for:
-
-- `skull_offset_y_ratio` (default 0.66)- Skulls: `<PHONKEDIT_ASSETS_ROOT>\textures\gui\skull*.png`
-
-  Vertical position of the skull as a fraction of monitor height (0 = top, 1 = bottom). 0.66 puts it around the lower third.- Audio: `<PHONKEDIT_ASSETS_ROOT>\sounds\phonk\phonk*.ogg`
-
-
-
-Restart not required; changes are read on launch.Or manually place files into:
-
-- `assets/skulls/`
-
-## Notes- `assets/phonk/`
-
-- Overlays are Tkinter top-level windows and will appear on each monitor at the captured resolution and position.
-
-- Skull is drawn as a separate canvas layer so it can be animated independently in the future.## Notes
-
-- If you hear phonk but don’t see overlays, check that OGG files exist and that your Python can create Tkinter windows (some RDP setups restrict this).- This app stays in the system tray; use the menu to exit
-
-- Audio output uses your default device
-- If you have many monitors or large resolutions, image processing may take a second
-
-### Typing trigger (less frequent)
-
-You can also trigger the effect while typing. By default it’s much less common than clicks. Configure via these options in `config.json`:
-
-- `typing_enabled` (default true)
-  Enable/disable typing as a trigger source.
-
-- `typing_min_cooldown_ms` (default 3000)
-  Minimum time between typing-based triggers, in milliseconds.
-
-- `typing_trigger_chance` (default 0.07)
-  Probability per keypress to trigger (0.0 to 1.0). Lower values mean rarer effects while typing.
-
-### Skull-only shake
-
-Skulls are drawn on a separate overlay layer and can shake independently from the screenshot background. Configure via:
-
-- `skull_shake_enabled` (default true)
-  Toggle skull-only animation.
-
-- `skull_shake_amplitude_px` (default 5)
-  How many pixels the skull moves around its base position.
-
-- `skull_shake_speed_hz` (default 9.0)
-  Oscillation speed (cycles per second).

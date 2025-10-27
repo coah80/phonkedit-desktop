@@ -289,12 +289,13 @@ VK_RWIN = 0x5C
 VK_CAPITAL = 0x14  # CapsLock
 VK_TAB = 0x09
 VK_ESCAPE = 0x1B
+VK_P = 0x50
 
 def poll_clicks():
     user32 = ctypes.windll.user32
     prev_left = False
     prev_right = False
-    while True:
+    while not STOP_EVENT.is_set():
         left = (user32.GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0
         right = (user32.GetAsyncKeyState(VK_RBUTTON) & 0x8000) != 0
         if left and not prev_left:
@@ -306,15 +307,27 @@ def poll_clicks():
         time.sleep(0.02)
 
 def poll_keys():
-    """Poll for key press rising edges across virtual keys and trigger rarely for typing."""
-    if not TYPING_ENABLED:
-        return
+    """Poll for key press rising edges across virtual keys and trigger rarely for typing.
+    Also listens for Ctrl+Shift+P to stop the app."""
     user32 = ctypes.windll.user32
     ignored = {VK_SHIFT, VK_CONTROL, VK_MENU, VK_LWIN, VK_RWIN, VK_CAPITAL, VK_TAB, VK_ESCAPE}
     prev = [False] * 256
-    while True:
+    prev_combo = False
+    while not STOP_EVENT.is_set():
+        # Global stop hotkey: Ctrl+Shift+P
+        ctrl_down = (user32.GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0
+        shift_down = (user32.GetAsyncKeyState(VK_SHIFT) & 0x8000) != 0
+        p_down = (user32.GetAsyncKeyState(VK_P) & 0x8000) != 0
+        combo = ctrl_down and shift_down and p_down
+        if combo and not prev_combo:
+            overlay_requests.put(("shutdown", None))
+        prev_combo = combo
         # Scan a subset of virtual keys. 0x08..0xFE covers Backspace to OEM keys.
         triggered = False
+        if not TYPING_ENABLED:
+            # Skip typing trigger if disabled, but still process stop combo
+            time.sleep(0.015)
+            continue
         for vk in range(0x08, 0xFF):
             if vk in (VK_LBUTTON, VK_RBUTTON) or vk in ignored:
                 continue
@@ -344,6 +357,24 @@ def process_overlay_queue(root):
                     show_overlay_item(root, img, rect)
             elif msg == "close":
                 close_all_overlays()
+            elif msg == "shutdown":
+                # Stop everything and exit
+                STOP_EVENT.set()
+                try:
+                    stop_audio()
+                except Exception:
+                    pass
+                close_all_overlays()
+                # Remove session output directory if used
+                try:
+                    if SESSION_OUTPUT_DIR and SESSION_OUTPUT_DIR.exists():
+                        shutil.rmtree(SESSION_OUTPUT_DIR, ignore_errors=True)
+                except Exception:
+                    pass
+                try:
+                    root.after(50, root.quit)
+                except Exception:
+                    pass
     except Empty:
         pass
     root.after(10, lambda: process_overlay_queue(root))
@@ -362,6 +393,32 @@ def main():
     SKULL_SHAKE_ENABLED = bool(CONFIG.get("skull_shake_enabled", DEFAULT_CONFIG["skull_shake_enabled"]))
     SKULL_SHAKE_AMPL_PX = max(0, int(CONFIG.get("skull_shake_amplitude_px", DEFAULT_CONFIG["skull_shake_amplitude_px"])) )
     SKULL_SHAKE_SPEED_HZ = max(0.1, float(CONFIG.get("skull_shake_speed_hz", DEFAULT_CONFIG["skull_shake_speed_hz"])) )
+    # Create a per-run temporary output folder under ./output and clean it up on exit
+    global SESSION_OUTPUT_DIR, OUTPUT_DIR
+    try:
+        (BASE_DIR / "output").mkdir(parents=True, exist_ok=True)
+        SESSION_OUTPUT_DIR = (BASE_DIR / "output" / f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{os.getpid()}")
+        SESSION_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        OUTPUT_DIR = SESSION_OUTPUT_DIR
+    except Exception:
+        # Fallback to system temp if local path fails
+        SESSION_OUTPUT_DIR = Path(tempfile.mkdtemp(prefix="phonkedit-session-"))
+        OUTPUT_DIR = SESSION_OUTPUT_DIR
+
+    def _cleanup_on_exit():
+        try:
+            stop_audio()
+        except Exception:
+            pass
+        close_all_overlays()
+        try:
+            if SESSION_OUTPUT_DIR and SESSION_OUTPUT_DIR.exists():
+                shutil.rmtree(SESSION_OUTPUT_DIR, ignore_errors=True)
+        except Exception:
+            pass
+
+    atexit.register(_cleanup_on_exit)
+
     root = tk.Tk()
     root.withdraw()
     threading.Thread(target=poll_clicks, daemon=True).start()
@@ -390,7 +447,8 @@ def main():
     try:
         root.mainloop()
     except KeyboardInterrupt:
-        pass
+        overlay_requests.put(("shutdown", None))
+        time.sleep(0.2)
 
 if __name__ == "__main__":
     main()
