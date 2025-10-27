@@ -1,0 +1,9 @@
+{
+  "click_delay_ms": 300,
+  "min_cooldown_ms": 200,
+  "skull_size_ratio": 0.18,
+  "skull_offset_y_ratio": 0.66,
+  "typing_enabled": true,
+  "typing_min_cooldown_ms": 3000,
+  "typing_trigger_chance": 0.07
+}
