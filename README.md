@@ -1,13 +1,16 @@
 phonkedit-desktop
 =================
 
+if u like this, try out the minecraft equivalent, or support me on ko-fi.com
+-----------------------------------------
+
+https://www.curseforge.com/mods/phonkedit 
+https://www.modrinth.com/mod/phonk-edit 
+https://ko-fi.com/coah
+
 What this is
 -------------
 phonkedit-desktop is a small Python desktop utility that captures your screen(s), applies a stylized "phonk" filter, optionally overlays skull art, and plays a random phonk audio track. It is designed to run locally and save capture outputs to the `output/` directory.
-
-Quick summary (one-liner)
--------------------------
-Run with Python; it will create `config.json` with sensible defaults on first run and use the folders under `assets/` for images and audio.
 
 Prerequisites
 -------------
