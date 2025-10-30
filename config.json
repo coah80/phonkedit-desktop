@@ -5,5 +5,9 @@
   "skull_offset_y_ratio": 0.66,
   "typing_enabled": true,
   "typing_min_cooldown_ms": 3000,
-  "typing_trigger_chance": 0.07
+  "typing_trigger_chance": 0.03,
+  "click_trigger_chance": 0.35,
+  "skull_shake_enabled": true,
+  "skull_shake_amplitude_px": 5,
+  "skull_shake_speed_hz": 9.0
 }

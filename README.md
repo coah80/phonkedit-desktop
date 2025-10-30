@@ -89,7 +89,16 @@ How it behaves
 Configuration
 -------------
 - Edit `config.json` to adjust timings, skull size/position, typing trigger chance, and other parameters. Reasonable defaults are created automatically.
+- `click_trigger_chance` (0-1) controls how often each fresh mouse click fires the overlay. Default is 0.35.
+- `typing_trigger_chance` (0-1) does the same for typing bursts, now defaulting to 0.03 for a lighter touch.
 - If you want to supply mod assets from an external path, you may set the environment variable `PHONKEDIT_ASSETS_ROOT` to point to that root; the app will use it when present.
+
+Building a Windows .exe
+-----------------------
+- On a Windows box, install PyInstaller inside your venv: `python -m pip install pyinstaller`.
+- Run `make_exe.bat` (or run the `pyinstaller --noconfirm --onefile --windowed --add-data "assets;assets" --add-data "config.json;." main.py` command manually).
+- The bundled exe lands in `dist\main.exe`. Keep the `assets` folder next to the exe (the command already bakes a copy in, but you can overwrite it with your own skulls/phonk).
+- Ship `dist\main.exe` plus `assets\` (and optionally `config.json`) to whoever wants to meme.
 
 Troubleshooting
 ---------------
@@ -105,4 +114,3 @@ License / Contact
 See the project repository for license and author contact information.
 
 That's it — keep `assets/` populated and run `python main.py` to start capturing.
-
