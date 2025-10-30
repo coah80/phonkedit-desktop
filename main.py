@@ -115,7 +115,7 @@ def slurp_cfg():
 
 def scream_phonk():
  if pygame is None:
-  print("no pygame no tunes sorry nerd.",flush=True)
+  print("JUST INSTALL THE DEPENDENCIES",flush=True)
   return
  spawn_trash()
  stash=list(phonk_hoard.glob("*.ogg"))
@@ -148,7 +148,7 @@ def smudge_pic(pic):
 def throw_captures():
  if not mss:
   if ImageGrab is None:
-   print("no mss and no imagegrab? welp no captures for u.",flush=True)
+   print("bro just install the dependencies",flush=True)
    return
   tag=datetime.now().strftime("%Y%m%d_%H%M%S")
   try:
@@ -162,6 +162,8 @@ def throw_captures():
    print(f"saved {spot}",flush=True)
   except Exception as why:
    print(f"imagegrab puked: {why}",flush=True)
+  finally:
+   overlay_vomit.put(("mark_ready",None))
   return
  with mss.mss() as grabber:
   tag=datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -182,6 +184,7 @@ def throw_captures():
     print(f"saved {spot}",flush=True)
    except Exception as splat:
     print(f"capture barfed on monitor {idx}: {splat}",flush=True)
+ overlay_vomit.put(("mark_ready",None))
 
 def spew_overlay(root,pic,rect):
  x,y,w,h=rect
@@ -218,7 +221,6 @@ def spew_overlay(root,pic,rect):
   skull_gore[key]=skull_id
  if skull_photo is not None:
   skull_pics[key]=skull_photo
- if not overlay_ready.is_set(): overlay_ready.set()
 
 def melt_overlays():
  for win in list(window_litter.values()):
@@ -276,7 +278,7 @@ vk_p=0x50
 
 def spy_clicks():
  if not hasattr(ctypes,"windll"):
-  print("no windll. mac? clicks wont auto trigger.",flush=True)
+  print("sorry, this only works on windows, you need windll :)",flush=True)
   return
  user32=ctypes.windll.user32
  prev_left=False
@@ -294,7 +296,7 @@ def spy_clicks():
 
 def stalk_keys():
  if not hasattr(ctypes,"windll"):
-  print("no windll. mac? keyboard poll dead.",flush=True)
+  print("sorry, this only works on windows, you need windll :)",flush=True)
   return
  user32=ctypes.windll.user32
  ignored={vk_shift,vk_control,vk_menu,vk_lwin,vk_rwin,vk_capital,vk_tab,vk_escape}
@@ -326,6 +328,10 @@ def stalk_keys():
   time.sleep(0.015)
 
 def bleed_overlay_queue(root):
+ def cleanup_overlays():
+  try: shut_audio_pipe()
+  except Exception: pass
+  melt_overlays()
  try:
   while True:
    msg,payload=overlay_vomit.get_nowait()
@@ -334,12 +340,13 @@ def bleed_overlay_queue(root):
    elif msg=="add_many":
     for pic,rect in payload: spew_overlay(root,pic,rect)
    elif msg=="close":
-    melt_overlays()
+    cleanup_overlays()
+   elif msg=="mark_ready":
+    if not overlay_ready.is_set():
+     overlay_ready.set()
    elif msg=="shutdown":
     global_stop.set()
-    try: shut_audio_pipe()
-    except Exception: pass
-    melt_overlays()
+    cleanup_overlays()
     try:
      if session_dumpster and session_dumpster.exists():
       shutil.rmtree(session_dumpster,ignore_errors=True)
@@ -388,6 +395,28 @@ def chaos_entry():
  atexit.register(trash_cleanup)
  root=tk.Tk()
  root.withdraw()
+ def show_intro():
+  intro=tk.Toplevel(root)
+  intro.title("Phonkedit Info")
+  intro.attributes("-topmost",True)
+  intro.geometry("340x150")
+  msg="To stop the \"virus\" just press Ctrl + Shift + P"
+  frame=tk.Frame(intro,padx=16,pady=16)
+  frame.pack(fill="both",expand=True)
+  label=tk.Label(frame,text=msg,wraplength=300,justify="center",font=("Segoe UI",12))
+  label.pack(pady=(0,16))
+  def close_intro():
+   try:
+    intro.grab_release()
+   except Exception:
+    pass
+   intro.destroy()
+  btn=tk.Button(frame,text="Got it",command=close_intro)
+  btn.pack()
+  intro.protocol("WM_DELETE_WINDOW",close_intro)
+  intro.grab_set()
+  intro.lift()
+ show_intro()
  threading.Thread(target=spy_clicks,daemon=True).start()
  threading.Thread(target=stalk_keys,daemon=True).start()
  bleed_overlay_queue(root)

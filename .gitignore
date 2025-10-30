@@ -1,0 +1,12 @@
+# Build artifacts
+build/
+dist/
+*.spec
+
+# Virtual environments
+.venv/
+
+# Runtime output
+output/
+__pycache__/
+*.pyc
